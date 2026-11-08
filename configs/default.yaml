@@ -1,0 +1,99 @@
+# Intel RealSense D435, depth at 848x480
+# [DS]  D400 Series Datasheet, doc. 337029-017 (Oct 2024)
+# [BKM] Tuning D400 Depth Cameras for Best Performance, Rev 1.9
+
+camera:
+  width: 848            # [BKM] 1b
+  height: 480
+  hfov_deg: 87.0        # [DS] Table 3-49
+  baseline_m: 0.050     # [DS] Table 3-49
+  min_depth_m: 0.195    # [DS] Table 4-11 (BKM says ~0.168, using the datasheet)
+  subpixel: 0.08        # [BKM] 3e
+  depth_unit_m: 0.001   # [BKM] 8a
+  # datasheet spec (<=2 m, 80% ROI): fill rate >= 99%, RMS error <= 2%
+
+# assumptions on top of the Intel spec
+camera_model:
+  seed: 0
+  effects: [min_depth, left_band, stereo_shadow, edges, specular, noise, quantization]
+
+  noise_corr_px: 4.0     # BKM 3e describes the bumps but gives no size
+  shadow_tol_px: 0.5
+
+  # edges
+  edge_jump_m: 0.01      # depth step that counts as an edge
+  edge_width_px: 1
+
+  # specular holes on metal (the datasheet fill rate only covers matte targets)
+  highlight_p: 0.9                       # hole probability facing the camera
+  highlight_lobe_deg_per_roughness: 60   # 9 deg at roughness 0.15, 24 deg at 0.4
+  grazing_start_deg: 60                  # hole ramp starts here
+  grazing_p: 0.8                         # hole probability at 90 deg
+  hole_blob_px: 3
+
+# scene generation
+scene:
+  seed: 0
+  n_parts_min: 4
+  n_parts_max: 8
+  alu_roughness_min: 0.15       # polished
+  alu_roughness_max: 0.40       # brushed
+  views_per_scene: 3
+  cam_radius_min_m: 0.3         # above min range and the ~20 cm focus limit (BKM 8b)
+  cam_radius_max_m: 0.7         # brackets still ~1000 px
+  cam_elevation_min_deg: 35     # 90 = straight down
+  cam_elevation_max_deg: 85
+
+  table_half_size_m: 2.0        # big enough that the camera never sees past the edge
+
+  # parts start spread out and stacked so they don't start inside each other
+  spawn_xy_m: 0.12
+  spawn_z_start_m: 0.20
+  spawn_z_step_m: 0.15
+
+  physics_min_s: 2
+  physics_max_s: 6
+  physics_friction: 0.8         # Blender defaults threw 7 % of the parts off the table
+  physics_linear_damping: 0.2
+  physics_angular_damping: 0.2
+
+  light_count: 2
+  light_radius_min_m: 1.0
+  light_radius_max_m: 2.0
+  light_elevation_min_deg: 30
+  light_elevation_max_deg: 85
+  light_energy_min_w: 100
+  light_energy_max_w: 400
+
+render:
+  samples: 64
+
+parts:
+  tslot:
+    size_m: 0.040
+    slot_open_m: 0.010
+    slot_wall_m: 0.0045
+    slot_inner_w_m: 0.014
+    slot_depth_m: 0.010
+    bore_d_m: 0.0085
+  catalogue:
+    - {name: profile_100mm, type: profile, length_m: 0.10, weight: 1}
+    - {name: profile_200mm, type: profile, length_m: 0.20, weight: 1}
+    - {name: profile_300mm, type: profile, length_m: 0.30, weight: 1}
+    - {name: bracket,       type: bracket, leg_m: 0.040, thickness_m: 0.004, width_m: 0.036, weight: 2}
+
+experiment:
+  seed: 0
+  min_visible_px: 500          # skip bracket views smaller than this
+  min_points: 50               # fewer valid points counts as a failure
+  init_rot_deg: 15             # starting guess = true pose + this error
+  init_trans_m: 0.02
+  icp_max_corr_m: 0.03
+  icp_max_iter: 50
+  model_points: 20000
+  eval_points: 2000            # subset for ADD-S
+  success_add_s_frac: 0.10     # BOP threshold, too loose here
+  strict_t_mm: 5.0             # grasping tolerance
+  strict_r_deg: 5.0
+  icp_rounds: 3                # re-cull the visible side before each round
+  cull_margin_deg: 5           # culling tolerance after round 1

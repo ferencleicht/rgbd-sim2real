@@ -1,0 +1,40 @@
+[project]
+name = "rgbd-sim2real"
+version = "0.1.0"
+description = "Synthetic RGB-D data with a realistic depth camera model for metallic parts"
+readme = "README.md"
+requires-python = "==3.11.*"
+dependencies = [
+    "blenderproc>=2.8.0",
+    "h5py>=3.16.0",
+    "mapbox-earcut>=2.1.0",
+    "matplotlib>=3.11.2",
+    "numpy>=2.4.6",
+    "open3d>=0.20.0",
+    "pyyaml>=6.0.3",
+    "scipy>=1.17.1",
+    "shapely>=2.2.0",
+    "trimesh>=5.2.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+    "ruff>=0.17.3",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.ruff.lint.isort]
+section-order = ["blenderproc", "future", "standard-library", "third-party", "first-party", "local-folder"]
+
+[tool.ruff.lint.isort.sections]
+blenderproc = ["blenderproc"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]

@@ -1,0 +1,15 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Generated data and results
+data/
+output/
+
+# Report and notes
+report/
+notes/
+
+# macOS
+.DS_Store
